@@ -1,2 +1,14 @@
-# a-lightweight-CNN-for-FPGA
-This is a lightweight CNN customized for FPGA devices. which is trained on MNIST as a recipe.
+Commonly used handwritten digit recognition networks are LeNet, or AlexNet, which is commonly used for image classification tasks, and in hardware deployments, these networks may not be so suitable due to the large number of parameters, so it is necessary to modify these networks. In particular, the weights required for the fully connected layer are very large, so in order to save the resources of the deployment, we need to reduce the weights of the fully connected layer, and the common method is to use the global maximum pooling to replace the weights of the fully connected layer.By replacing some of the fully connected layers with global maximum pooling, the number of parameters in the model can be greatly reduced.
+The activation function is activated with Relu, which can also reduce the usage of logical resources. Functions such as sigmoid are designed to multiply, divide and exponentiate, which are cumbersome to implement in hardware circuits, so using a simple Relu function can also reduce the use of logical resources.
+
+ Quantification of feature maps
+
+In the process of training, the feature map is actually saved as a floating-point number of 32 using Python programming in the computer. However, FPGAs can only perform calculations on integers, so quantization is a difficult step to skip, and the advantages and disadvantages of quantization are as follows:
+1. Speed up the operation. When 32float is converted to an int8 representation, fixed-point arithmetic is faster than floating-point arithmetic when the system has floating-point acceleration modules.
+2. Reduce storage space. If you convert a 32-point number to an 8-bit representation, the storage space is reduced to 1/4 of the size.
+3. When it is approximated by a low bandwidth value, it will cause some loss of accuracy. The parameters of neural networks are mostly redundant (or tolerant of noise), so the impact on accuracy is not particularly large when transforming in approximation. In fact, it has been shown that for relatively simple networks, the impact of 8-bit quantization on its accuracy is very small, so we use 8-bit to quantize the feature map.
+
+Quantification of weights
+
+For the weight of the convolutional layer, if 8-bit quantization is used, if the size of the convolution kernel is 3*3, then in the process of convolution calculation, 9 9-bit special multipliers are needed, and if 8 convolutional kernels are used for parallel calculation, 72 9-bit special multipliers are needed, and the chip designed this time only has 46 9-bit special multipliers, which does not meet the needs of the design.
+XNOR-Net is a simpler neural network that binarizes weights and inputs, and its model size and inference speed are very good, but the loss of accuracy is relatively large. So we binarize the weights, as shown in the second row of the table, which is Binary-Weight-Networks. At this point, its accuracy is not fundamentally different from that of the 32float model.
